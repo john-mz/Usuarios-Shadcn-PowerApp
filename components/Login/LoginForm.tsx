@@ -1,4 +1,7 @@
+"use client"
+
 import type { ComponentProps } from "react"
+import { useRouter } from "next/navigation"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -14,8 +17,19 @@ import { cn } from "@/lib/utils"
 type LoginFormProps = ComponentProps<"form">
 
 export function LoginForm({ className, ...props }: LoginFormProps) {
+  const router = useRouter()
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    router.push("/dashboard")
+  }
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form
+      className={cn("flex flex-col gap-6", className)}
+      onSubmit={handleSubmit}
+      {...props}
+    >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Inicia sesión</h1>
@@ -30,7 +44,6 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
             name="email"
             type="email"
             placeholder="tu@correo.com"
-            required
             className="bg-background"
           />
         </Field>
@@ -48,7 +61,6 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
             id="password"
             name="password"
             type="password"
-            required
             className="bg-background"
           />
         </Field>

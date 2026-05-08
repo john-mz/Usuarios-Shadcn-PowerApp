@@ -4,6 +4,15 @@ export type DashboardUser = {
   correo: string
 }
 
+export type DashboardView = "estudiantes" | "perfil"
+
+export type ProfileData = {
+  nombre: string
+  correo: string
+  clave: string
+  avatar: string | null
+}
+
 export type DirectoryPayload = {
   nombres: string[]
   correos: string[]

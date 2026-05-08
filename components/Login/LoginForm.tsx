@@ -14,11 +14,23 @@ import { cn } from "@/lib/utils"
 
 type LoginFormProps = ComponentProps<"form">
 
+const LOGIN_PROFILE_STORAGE_KEY = "zeta-login-profile"
+
 export function LoginForm({ className, ...props }: LoginFormProps) {
   const router = useRouter()
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    const formData = new FormData(event.currentTarget)
+    const correo = String(formData.get("email") ?? "")
+    const clave = String(formData.get("password") ?? "")
+
+    window.sessionStorage.setItem(
+      LOGIN_PROFILE_STORAGE_KEY,
+      JSON.stringify({ correo, clave })
+    )
+
     router.push("/dashboard")
   }
 
@@ -34,8 +46,6 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex flex-col gap-1">
-          </div>
           <h1 className="text-2xl font-bold">Inicia sesión</h1>
           <p className="text-sm text-balance text-muted-foreground">
             Ingresa tu correo y contraseña para acceder al sistema.

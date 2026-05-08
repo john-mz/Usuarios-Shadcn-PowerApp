@@ -23,19 +23,18 @@ type ProfilePanelProps = {
 }
 
 export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
-  const [nombre, setNombre] = useState(profile.nombre)
   const [correo, setCorreo] = useState(profile.correo)
   const [clave, setClave] = useState(profile.clave)
   const [avatar, setAvatar] = useState(profile.avatar)
 
   const initials = useMemo(() => {
-    return nombre
+    return "Administrador"
       .split(" ")
       .filter(Boolean)
       .slice(0, 2)
       .map((value) => value[0]?.toUpperCase() ?? "")
       .join("")
-  }, [nombre])
+  }, [])
 
   function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -58,7 +57,7 @@ export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
     event.preventDefault()
 
     onSave({
-      nombre: nombre.trim(),
+      nombre: "Administrador",
       correo: correo.trim(),
       clave: clave.trim(),
       avatar,
@@ -66,13 +65,19 @@ export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
   }
 
   return (
-    <Card className="max-w-3xl">
-      <CardHeader>
-        <CardTitle>Perfil</CardTitle>
-        <CardDescription>
-          Actualiza tu avatar y tus datos. Los cambios también son temporales y
-          se pierden al recargar.
-        </CardDescription>
+    <Card className="max-w-3xl border-border/70 bg-background/90">
+      <CardHeader className="gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle>Perfil del administrador</CardTitle>
+            <CardDescription>
+              Actualiza tu avatar y tus datos de acceso.
+            </CardDescription>
+          </div>
+          <div className="rounded-md bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+            Sesion local
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <form
@@ -80,8 +85,8 @@ export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
           className="flex flex-col gap-8"
           onSubmit={handleSubmit}
         >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="flex size-24 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-2xl font-semibold text-primary ring-1 ring-border">
+          <div className="flex flex-col gap-5 rounded-lg border border-border bg-muted/30 p-4 md:flex-row md:items-center">
+            <div className="flex size-28 items-center justify-center overflow-hidden rounded-xl bg-primary text-3xl font-semibold text-primary-foreground shadow-sm">
               {avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -93,15 +98,15 @@ export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
                 initials || "U"
               )}
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-1 flex-col gap-3">
               <div>
-                <p className="text-sm font-medium">Avatar del perfil</p>
+                <p className="text-base font-medium">Avatar del perfil</p>
                 <p className="text-sm text-muted-foreground">
-                  Puedes subir una imagen local para esta sesión.
+                  Esta imagen identifica al administrador durante la sesion.
                 </p>
               </div>
               <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted">
-                <CameraIcon className="size-4" />
+                <CameraIcon aria-hidden="true" />
                 Cambiar avatar
                 <input
                   type="file"
@@ -117,22 +122,21 @@ export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
             <Field>
               <FieldLabel htmlFor="profile-name">
                 <span className="inline-flex items-center gap-2">
-                  <UserRoundIcon className="size-4" />
+                  <UserRoundIcon aria-hidden="true" />
                   Nombre
                 </span>
               </FieldLabel>
               <Input
                 id="profile-name"
-                value={nombre}
-                onChange={(event) => setNombre(event.target.value)}
-                placeholder="Tu nombre"
-                required
+                value="Administrador"
+                disabled
+                readOnly
               />
             </Field>
             <Field>
               <FieldLabel htmlFor="profile-email">
                 <span className="inline-flex items-center gap-2">
-                  <MailIcon className="size-4" />
+                  <MailIcon aria-hidden="true" />
                   Correo
                 </span>
               </FieldLabel>
@@ -148,7 +152,7 @@ export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
             <Field>
               <FieldLabel htmlFor="profile-password">
                 <span className="inline-flex items-center gap-2">
-                  <KeyRoundIcon className="size-4" />
+                  <KeyRoundIcon aria-hidden="true" />
                   Clave
                 </span>
               </FieldLabel>
@@ -164,7 +168,7 @@ export function ProfilePanel({ profile, onSave }: ProfilePanelProps) {
           </FieldGroup>
         </form>
       </CardContent>
-      <CardFooter className="justify-end">
+      <CardFooter className="justify-end border-t border-border/70">
         <Button form="profile-form" type="submit">
           Guardar cambios
         </Button>

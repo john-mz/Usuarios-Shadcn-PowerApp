@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { GraduationCapIcon, UserRoundIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
 
 import {
   AlertDialog,
@@ -16,14 +16,12 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import { DashboardFormDialog } from "./DashboardFormDialog"
 import { DashboardSidebar } from "./DashboardSidebar"
+import { DashboardStats } from "./DashboardStats"
+import { DashboardSummaryPanel } from "./DashboardSummaryPanel"
 import { DashboardTable } from "./DashboardTable"
 import { ProfilePanel } from "./ProfilePanel"
 import type {
@@ -38,10 +36,45 @@ type DialogState =
   | { mode: "edit"; user: DashboardUser }
   | null
 
+const LOGIN_PROFILE_STORAGE_KEY = "zeta-login-profile"
+const DEFAULT_PROFILE: ProfileData = {
+  nombre: "Administrador",
+  correo: "admin@campus.local",
+  clave: "123456",
+  avatar: null,
+}
+
+function getInitialProfile(): ProfileData {
+  if (typeof window === "undefined") {
+    return DEFAULT_PROFILE
+  }
+
+  const storedProfile = window.sessionStorage.getItem(LOGIN_PROFILE_STORAGE_KEY)
+
+  if (!storedProfile) {
+    return DEFAULT_PROFILE
+  }
+
+  try {
+    const parsed = JSON.parse(storedProfile) as Partial<ProfileData>
+
+    return {
+      ...DEFAULT_PROFILE,
+      correo:
+        typeof parsed.correo === "string" ? parsed.correo : DEFAULT_PROFILE.correo,
+      clave: typeof parsed.clave === "string" ? parsed.clave : DEFAULT_PROFILE.clave,
+    }
+  } catch {
+    window.sessionStorage.removeItem(LOGIN_PROFILE_STORAGE_KEY)
+    return DEFAULT_PROFILE
+  }
+}
+
 export function Dashboard() {
   const router = useRouter()
   const [currentView, setCurrentView] = useState<DashboardView>("estudiantes")
   const [users, setUsers] = useState<DashboardUser[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState("")
   const [dataSource, setDataSource] = useState<"remote" | "fallback" | null>(
@@ -51,12 +84,22 @@ export function Dashboard() {
   const [deleteCandidate, setDeleteCandidate] = useState<DashboardUser | null>(
     null
   )
-  const [profile, setProfile] = useState<ProfileData>({
-    nombre: "Administrador",
-    correo: "admin@campus.local",
-    clave: "123456",
-    avatar: null,
-  })
+  const [profile, setProfile] = useState<ProfileData>(getInitialProfile)
+
+  const filteredUsers = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+
+    if (!normalizedQuery) {
+      return users
+    }
+
+    return users.filter((user) => {
+      return (
+        user.nombre.toLowerCase().includes(normalizedQuery) ||
+        user.correo.toLowerCase().includes(normalizedQuery)
+      )
+    })
+  }, [searchQuery, users])
 
   useEffect(() => {
     let cancelled = false
@@ -156,33 +199,36 @@ export function Dashboard() {
         onLogout={handleLogout}
       />
       <SidebarInset className="bg-muted/30">
-        <main className="min-h-svh px-4 py-6 md:px-8">
+        <main className="min-h-svh bg-[linear-gradient(180deg,_var(--background),_var(--muted))] px-4 py-6 md:px-8">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-            <header className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-background p-6 shadow-sm md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-3">
-                <SidebarTrigger type="button" className="mt-1 shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Dashboard temporal
-                  </p>
-                  <h1 className="text-3xl font-bold tracking-tight">
-                    {currentView === "estudiantes"
-                      ? "Gestión local de estudiantes"
-                      : "Perfil del usuario"}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {currentView === "estudiantes"
-                      ? "Los cambios del CRUD viven solo en memoria y se pierden al recargar."
-                      : "Actualiza tus datos de perfil para esta sesión temporal."}
-                  </p>
+            <header className="flex flex-col gap-5 rounded-xl border border-border/70 bg-background/95 p-5 shadow-sm md:flex-row md:items-center md:justify-between md:p-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-primary px-2 py-1 text-xs font-medium uppercase tracking-[0.18em] text-primary-foreground">
+                    Zeta
+                  </span>
+                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Sistema de Gestion de Estudiantes
+                  </span>
                 </div>
+                <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+                  {currentView === "estudiantes"
+                    ? "Gestión de estudiantes"
+                    : "Perfil del usuario"}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {currentView === "estudiantes"
+                    ? "Administra el directorio academico, revisa el origen de datos y realiza cambios para esta sesion."
+                    : "Actualiza tus datos de perfil."}
+                </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 {currentView === "estudiantes" ? (
                   <Button
                     type="button"
                     onClick={() => setDialogState({ mode: "create", user: null })}
                   >
+                    <PlusIcon data-icon="inline-start" />
                     Nuevo registro
                   </Button>
                 ) : null}
@@ -190,9 +236,15 @@ export function Dashboard() {
             </header>
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="space-y-6">
+              <div className="flex flex-col gap-6">
                 {currentView === "estudiantes" ? (
                   <>
+                    <DashboardStats
+                      totalUsers={users.length}
+                      dataSource={dataSource}
+                      isLoading={isLoading}
+                    />
+
                     {dataSource === "fallback" ? (
                       <Card className="border-amber-500/30 bg-amber-50 text-amber-950">
                         <CardContent className="py-4">
@@ -228,49 +280,32 @@ export function Dashboard() {
 
                     {!isLoading && !loadError ? (
                       <DashboardTable
-                        users={users}
+                        users={filteredUsers}
+                        totalUsers={users.length}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
                         onEdit={(user) => setDialogState({ mode: "edit", user })}
                         onDelete={handleDelete}
                       />
                     ) : null}
                   </>
                 ) : (
-                  <ProfilePanel profile={profile} onSave={setProfile} />
+                  <ProfilePanel
+                    profile={profile}
+                    onSave={(nextProfile) =>
+                      setProfile({ ...nextProfile, nombre: "Administrador" })
+                    }
+                  />
                 )}
               </div>
 
-              <aside className="space-y-4">
-                <Card>
-                  <CardContent className="flex flex-col gap-4 py-5">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">Accesos rápidos</p>
-                      <p className="text-sm text-muted-foreground">
-                        Navega entre las dos áreas principales del panel.
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        variant={
-                          currentView === "estudiantes" ? "default" : "outline"
-                        }
-                        type="button"
-                        onClick={() => setCurrentView("estudiantes")}
-                      >
-                        <GraduationCapIcon data-icon="inline-start" />
-                        Estudiantes
-                      </Button>
-                      <Button
-                        variant={currentView === "perfil" ? "default" : "outline"}
-                        type="button"
-                        onClick={() => setCurrentView("perfil")}
-                      >
-                        <UserRoundIcon data-icon="inline-start" />
-                        Perfil
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </aside>
+              <DashboardSummaryPanel
+                currentView={currentView}
+                profile={profile}
+                totalUsers={users.length}
+                dataSource={dataSource}
+                onNavigate={setCurrentView}
+              />
             </div>
           </div>
 

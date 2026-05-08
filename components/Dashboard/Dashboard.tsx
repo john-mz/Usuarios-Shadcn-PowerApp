@@ -4,6 +4,16 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { GraduationCapIcon, UserRoundIcon } from "lucide-react"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -38,6 +48,9 @@ export function Dashboard() {
     null
   )
   const [dialogState, setDialogState] = useState<DialogState>(null)
+  const [deleteCandidate, setDeleteCandidate] = useState<DashboardUser | null>(
+    null
+  )
   const [profile, setProfile] = useState<ProfileData>({
     nombre: "Administrador",
     correo: "admin@campus.local",
@@ -118,6 +131,21 @@ export function Dashboard() {
   function handleLogout() {
     setUsers([])
     router.push("/")
+  }
+
+  function handleDelete(user: DashboardUser) {
+    setDeleteCandidate(user)
+  }
+
+  function confirmDelete() {
+    if (!deleteCandidate) {
+      return
+    }
+
+    setUsers((currentUsers) =>
+      currentUsers.filter((user) => user.id !== deleteCandidate.id)
+    )
+    setDeleteCandidate(null)
   }
 
   return (
@@ -202,11 +230,7 @@ export function Dashboard() {
                       <DashboardTable
                         users={users}
                         onEdit={(user) => setDialogState({ mode: "edit", user })}
-                        onDelete={(userId) =>
-                          setUsers((currentUsers) =>
-                            currentUsers.filter((user) => user.id !== userId)
-                          )
-                        }
+                        onDelete={handleDelete}
                       />
                     ) : null}
                   </>
@@ -266,6 +290,39 @@ export function Dashboard() {
                 : handleCreate(values)
             }
           />
+
+          <AlertDialog
+            open={deleteCandidate !== null}
+            onOpenChange={(open) => {
+              if (!open) {
+                setDeleteCandidate(null)
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Eliminar estudiante</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción eliminará a{" "}
+                  <span className="font-medium text-foreground">
+                    {deleteCandidate?.nombre}
+                  </span>{" "}
+                  con correo{" "}
+                  <span className="font-medium text-foreground">
+                    {deleteCandidate?.correo}
+                  </span>
+                  . El cambio solo afecta la sesión actual y no se puede
+                  deshacer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete}>
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </main>
       </SidebarInset>
     </SidebarProvider>
